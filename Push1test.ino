@@ -2,7 +2,7 @@
 
 #include "DHT.h"
 
-LiquidCrystal lcd(10, 9, 7, 6, 5, 4);
+LiquidCrystal lcd(11, 9, 7, 6, 5, 4);
 
 int Contrast = 60;
 float tempIn = 0;
