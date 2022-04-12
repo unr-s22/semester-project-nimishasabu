@@ -24,7 +24,8 @@ void setup()
   lcd.begin(16,2);
   dht.begin();
   rtc.begin(); // Initialize the rtc object
-  lcd.begin(16,2);
+  rtc.setTime(12,34,30);
+  rtc.setDate(4,12,2022);
 }
 
 void loop() {
