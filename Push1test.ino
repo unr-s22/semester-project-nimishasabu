@@ -1,13 +1,15 @@
+//4/14/22 11:27pm
 #include <DS3231.h>
 #include <LiquidCrystal.h>
 #include <Stepper.h>
 
 #include "DHT.h"
-#define STEPS 32
+
 
 DS3231  rtc(SDA, SCL);
 LiquidCrystal lcd(10, 9, 7, 6, 5, 4);
-Stepper stepper(STEPS, 14, 15, 16, 17);
+const int stepsPerRevolution = 300;  
+Stepper myStepper(stepsPerRevolution, 14, 15, 16, 17);
 
 int Contrast = 60;
 float tempIn = 0;
@@ -20,8 +22,6 @@ DHT dht(DHTPIN, DHTTYPE);
 
 int resval = 0;  // holds the value
 int respin = A5; // sensor pin used
-int Pval = 0;
-int potVal = 0;
 
 void setup()
 {
@@ -31,12 +31,13 @@ void setup()
   rtc.begin(); // Initialize the rtc object
   rtc.setTime(12,34,30);
   rtc.setDate(4,12,2022);
-  stepper.setSpeed(200);
 }
 
 void loop() {
     resval = analogRead(respin);
+    lcd.clear();
     lcd.display();
+    lcd.setCursor(0,0);
     if  (resval<=100) {lcd.print("Water Lvl: Empty");} 
     else if (resval>100 && resval<=300) { lcd.print("Water Lvl: Lw"); } 
     else if (resval>300 && resval<=330) { lcd.print("Water Lvl: Md"); } 
@@ -70,17 +71,21 @@ void loop() {
  
  delay(1000);
 
- potVal = map(analogRead(A4),0,1024,0,500);
-if (potVal>Pval)
-  stepper.step(5);
-if (potVal<Pval)
-  stepper.step(-5);
+int sensorReading = analogRead(A4);
+ int motorSpeed = map(sensorReading, 0, 1023, 0, 100);
+ 
+  if (motorSpeed > 0) {
+    myStepper.setSpeed(motorSpeed);
+    myStepper.step(stepsPerRevolution / 100);
+  }
 
-Pval = potVal;
-
-lcd.setCursor(0,0);
-lcd.print("Pval:"); //for debugging
-lcd.print(Pval);
-lcd.clear();
-
-}
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Pval");
+  lcd.setCursor(6, 1);
+  lcd.print(motorSpeed);
+  lcd.print(" %");
+  
+  delay(1000);
+  
+    }
