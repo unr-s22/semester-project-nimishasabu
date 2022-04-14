@@ -1,10 +1,13 @@
 #include <DS3231.h>
 #include <LiquidCrystal.h>
+#include <Stepper.h>
 
 #include "DHT.h"
+#define STEPS 32
 
 DS3231  rtc(SDA, SCL);
 LiquidCrystal lcd(10, 9, 7, 6, 5, 4);
+Stepper stepper(STEPS, 14, 15, 16, 17);
 
 int Contrast = 60;
 float tempIn = 0;
@@ -17,6 +20,8 @@ DHT dht(DHTPIN, DHTTYPE);
 
 int resval = 0;  // holds the value
 int respin = A5; // sensor pin used
+int Pval = 0;
+int potVal = 0;
 
 void setup()
 {
@@ -26,6 +31,7 @@ void setup()
   rtc.begin(); // Initialize the rtc object
   rtc.setTime(12,34,30);
   rtc.setDate(4,12,2022);
+  stepper.setSpeed(200);
 }
 
 void loop() {
@@ -63,5 +69,18 @@ void loop() {
  lcd.print(rtc.getDateStr());
  
  delay(1000);
-}
 
+ potVal = map(analogRead(A4),0,1024,0,500);
+if (potVal>Pval)
+  stepper.step(5);
+if (potVal<Pval)
+  stepper.step(-5);
+
+Pval = potVal;
+
+lcd.setCursor(0,0);
+lcd.print("Pval:"); //for debugging
+lcd.print(Pval);
+lcd.clear();
+
+}
