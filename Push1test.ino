@@ -1,15 +1,13 @@
-//4/14/22 5:00pm
+//4/14/22 5:19pm
 #include <DS3231.h>
 #include <LiquidCrystal.h>
 #include <Stepper.h>
 
 #include "DHT.h"
 
-
 DS3231  rtc(SDA, SCL);
-LiquidCrystal lcd(12, 11, 10, 9, 8, 7);
-const int stepsPerRevolution = 300;  
-Stepper myStepper(stepsPerRevolution, 2,3,4,5);
+LiquidCrystal lcd(12, 11, 10, 9, 8, 7); 
+Stepper myStepper(300, 2,3,4,5);
 
 int Contrast = 60;
 float tempIn = 0;
@@ -22,6 +20,7 @@ DHT dht(DHTPIN, DHTTYPE);
 
 int resval = 0;  // holds the value
 int respin = A5; // sensor pin used
+int Potval_prev = 0;
 
 void setup()
 {
@@ -31,7 +30,7 @@ void setup()
   rtc.begin(); // Initialize the rtc object
   rtc.setTime(12,34,30);
   rtc.setDate(4,12,2022);
-  myStepper.setSpeed(60);
+  myStepper.setSpeed(200);
 
 }
 
@@ -74,18 +73,18 @@ void loop() {
   delay(1000);
 
   int Potval = analogRead(A4);
-  myStepper.setSpeed(analogRead(A4)/10);
-  myStepper.step(200);
-
+  if ((Potval != Potval_prev) && (Potval != 0)){
+    myStepper.step(Potval/10);
+  }
+  Potval_prev = Potval;
+  delay(100);
 
   lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print("Pval");
   lcd.setCursor(6, 1);
-  lcd.print(analogRead(A4));
+  lcd.print(Potval);
   lcd.print(" %");
-  
-
   
   delay(1000);
 }
