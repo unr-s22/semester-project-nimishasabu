@@ -1,4 +1,4 @@
-//4/20/22 12:10pm
+//4/21/21 01:08pm
 #include <DS3231.h>
 #include <LiquidCrystal.h>
 #include <Stepper.h>
@@ -13,6 +13,7 @@ int Contrast = 60;
 float tempIn = 0;
 float tempF = 0;
 float humidIn = 0;
+int state;
 
 #define DHTPIN 6
 #define DHTTYPE DHT11
@@ -56,15 +57,22 @@ void loop() {
   digitalWrite(rLED, HIGH);
   digitalWrite(bLED, HIGH);
   // Water Sensor
-  lcd.clear();
-  lcd.display();
-  lcd.setCursor(0,0);
-  if  (resval<=100) {lcd.print("Water Lvl: Empty");} 
-  else if (resval>100 && resval<=300) {lcd.print("Water Lvl: Lw"); } 
-  else if (resval>300 && resval<=330) {lcd.print("Water Lvl: Md"); } 
-  else if (resval>330) {lcd.print("Water Lvl: Full"); }
-  delay(1000); 
-  lcd.clear();
+
+  if (state==0){
+    digitalWrite(yLED, LOW);
+    lcd.noDisplay();
+    fanState = 0;
+  }
+  else {
+    lcd.clear();
+    lcd.display();
+    lcd.setCursor(0,0);
+    if  (resval<=100) {lcd.print("Water Lvl: Empty");} 
+    else if (resval>100 && resval<=300) {lcd.print("Water Lvl: Lw"); } 
+    else if (resval>300 && resval<=330) {lcd.print("Water Lvl: Md"); } 
+    else if (resval>330) {lcd.print("Water Lvl: Full"); }
+    delay(1000); 
+    lcd.clear();
 
   // Read and display Temp and Humid. Determine state run and idle
   humidIn = dht.readHumidity();
@@ -80,16 +88,7 @@ void loop() {
   lcd.setCursor(8,1);
   lcd.print(humidIn);
   delay(1000);
-  lcd.clear();
-
-  // During state transition, send this date and time
-  lcd.setCursor(0,0);
-  lcd.print("Time:  ");
-  lcd.println(rtc.getTimeStr());
-  lcd.setCursor(0,1);
-  lcd.print("Date: ");
-  lcd.print(rtc.getDateStr());
-  delay(1000);
+  lcd.clear(); 
 
   // Stepper Motor, should move independent of rest, not when disabled
   int stepButtonState = digitalRead(stepButton);
@@ -102,4 +101,28 @@ void disabled() {
   // YELLOW LED ON, FAN OFF, No sensors
   digitalWrite(yLED, LOW);
   lcd.noDisplay();
+}
+
+ void idle(){
+  //GREEN LED ON, CURRENT TIME, CURRENT WATER LEVEL 
+  digitalWrite(gLED, LOW);
+}
+
+void Times(){
+  // During state transition, send this date and time
+  lcd.setCursor(0,0);
+  lcd.print("Time:  ");
+  lcd.println(rtc.getTimeStr());
+  lcd.setCursor(0,1);
+  lcd.print("Date: ");
+  lcd.print(rtc.getDateStr());
+  delay(1000);
+
+}
+
+void error(){
+  //RED LED ON, ERROR MESSAGE, Motor off
+  digitalWrite(rLED,LOW);
+}
+
 }
