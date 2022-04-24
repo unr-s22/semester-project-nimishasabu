@@ -1,4 +1,4 @@
-//4/24/21 02:49pm
+//4/24/21 03:09 pm
 #include <DS3231.h>
 #include <LiquidCrystal.h>
 #include <Stepper.h>
@@ -11,6 +11,12 @@ DS3231  rtc(SDA, SCL);
 LiquidCrystal lcd(12, 11, 10, 9, 8, 7); 
 Stepper myStepper(512, 2,3,4,5);
 DHT dht(DHTPIN, DHTTYPE);
+
+unsigned char *port_B = (unsigned char *) 0x25;
+unsigned char *DDR_B = (unsigned char *) 0x24;
+unsigned char *port_L = (unsigned char *) 0x10B;
+unsigned char *DDR_L = (unsigned char *) 0x10A;
+
 
 int Contrast = 60;
 float tempIn = 0;
@@ -27,18 +33,17 @@ int stepButtonState = 0;
 //unsigned char *DDR_D = (unsigned char *) 0x2A;
 //int fanState = 0;
 
-unsigned char *port_L = (unsigned char *) 0x10B;
-unsigned char *DDR_L = (unsigned char *) 0x10A;
+
 
 
 int steppos = 0;
 volatile int onOffButton = 18;
 volatile int resetButton = 3;
 int resetButtonState = 0;
-volatile int yLED = 51;
-volatile int bLED = 53;
-volatile int rLED = 47;
-volatile int gLED = 49;
+volatile const int yLED = 53; //B0
+volatile const int bLED = 51; //B2
+volatile const int rLED = 47; //L2
+volatile const int gLED = 49; //L0
 
 
 
@@ -56,25 +61,29 @@ void setup()
   pinMode(resetButton, INPUT);
   //pinMode(fan, OUTPUT);
   //*DDR_D |= 0b00000100;
-  *DDR_L |= 0b00010000;
   
-  pinMode(yLED, OUTPUT);
-  pinMode(bLED, OUTPUT);
-  pinMode(gLED, OUTPUT);
-  pinMode(rLED, OUTPUT);
+  *DDR_B |= 0b00000001 | 0b00000100; //yled | bled;
+  *DDR_L |= 0b00010000 | 0b00000001 | 0b00000100; //fan | gled | rled;
+ 
+  
+//  pinMode(yLED, OUTPUT);
+//  pinMode(bLED, OUTPUT);
+//  pinMode(gLED, OUTPUT);
+//  pinMode(rLED, OUTPUT);
   //attachInterrupt(digitalPinToInterrupt(onOffButton), disabled, CHANGE);
 }
 
 void loop() {
   
-  *port_L |= (1 << PINL4);
+  *port_B |= (1 << PINB0) | (1 << PINB2);
+  *port_L |= (1 << PINL4) | (1 << PINL0) | (1 << PINL2);
 
 //  *port_D |= (1 << PIND2);
 //  digitalWrite(fan, HIGH); port_D |= (1 << PIND2)
-//  digitalWrite(yLED, HIGH);
-//  digitalWrite(gLED, HIGH);
-//  digitalWrite(rLED, HIGH);
-//  digitalWrite(bLED, HIGH);
+//  digitalWrite(yLED, LOW);
+//  digitalWrite(gLED, LOW);
+//  digitalWrite(rLED, LOW);
+//  digitalWrite(bLED, LOW);
 //  
 //  // Water Sensor
 //  if (state==0){
