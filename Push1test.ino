@@ -1,5 +1,4 @@
-//4/24/21 01:36pm
-//4/24/21 02:01pm
+//4/24/21 02:20pm
 #include <DS3231.h>
 #include <LiquidCrystal.h>
 #include <Stepper.h>
@@ -22,7 +21,7 @@ int resval = 0;                  // holds the sensor value
 int respin = A5;                 // sensor pin used
 const int stepButton = 53;
 int stepButtonState = 0;
-const int fan = A4;
+const int fan = 45;
 int fanState = 0;
 int steppos = 0;
 volatile int onOffButton = 18;
@@ -45,16 +44,16 @@ void setup()
   pinMode(stepButton, INPUT);
   pinMode(onOffButton, INPUT_PULLUP);
   pinMode(resetButton, INPUT);
+  pinMode(fan, OUTPUT);
   pinMode(yLED, OUTPUT);
   pinMode(bLED, OUTPUT);
   pinMode(gLED, OUTPUT);
   pinMode(rLED, OUTPUT);
-  attachInterrupt(digitalPinToInterrupt(onOffButton), disabled, CHANGE);
+  //attachInterrupt(digitalPinToInterrupt(onOffButton), disabled, CHANGE);
 }
 
 void loop() {
-
-  digitalWrite(45, HIGH);
+  digitalWrite(fan, HIGH);
 //  digitalWrite(yLED, HIGH);
 //  digitalWrite(gLED, HIGH);
 //  digitalWrite(rLED, HIGH);
