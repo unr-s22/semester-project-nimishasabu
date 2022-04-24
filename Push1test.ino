@@ -1,4 +1,4 @@
-//4/24/21 03:43 pm
+//4/24/21 03:57 pm
 #include <DS3231.h>
 #include <LiquidCrystal.h>
 #include <Stepper.h>
@@ -12,11 +12,8 @@ LiquidCrystal lcd(12, 11, 10, 9, 8, 7);
 Stepper myStepper(512, 2,3,4,5);
 DHT dht(DHTPIN, DHTTYPE);
 
-//const int fan = 45;
-//volatile const int yLED = 53; //B0
-//volatile const int bLED = 51; //B2
-//volatile const int rLED = 47; //L2
-//volatile const int gLED = 49; //L0
+//const int fan = 45; volatile const int yLED = 53; B0
+//volatile const int bLED = 51; B2 volatile const int rLED = 47; L2 volatile const int gLED = 49; L0
 unsigned char *port_B = (unsigned char *) 0x25;  // for yLED and bLED
 unsigned char *DDR_B = (unsigned char *) 0x24;
 unsigned char *port_L = (unsigned char *) 0x10B; // for fan rLED and gLED
@@ -37,6 +34,7 @@ int steppos = 0;
 volatile int onOffButton = 18;
 volatile int resetButton = 3;
 int resetButtonState = 0;
+void disabled();
 
 
 void setup()
@@ -60,33 +58,27 @@ void setup()
 
 void loop() {
   *port_B |= (0 << PINB0) | (0 << PINB2); // set yled and bled to low
-  *port_L |= (0 << PINL4) | (0 << PINL0) | (0 << PINL2); // set yled and bled to low
-
-//  *port_D |= (1 << PIND2);
-//  digitalWrite(fan, HIGH); port_D |= (1 << PIND2)
-//  digitalWrite(yLED, LOW);
-//  digitalWrite(gLED, LOW);
-//  digitalWrite(rLED, LOW);
-//  digitalWrite(bLED, LOW);
-//  
-//  // Water Sensor
-//  if (disabledState==1){
-//    digitalWrite(yLED, LOW);
-//    lcd.noDisplay();
-//    fanState = 0;
-//  }
-//  else {
-//     // Error state
-//     while (resval<=100 || resetButtonState != 0) {
-//      digitalRead(resetButton);
-//      lcd.clear();
-//      lcd.display();
-//      lcd.setCursor(0,0);
-//      digitalWrite(rLED, LOW);
-//      lcd.print("Water Lvl: Empty"); 
-//      delay(1000);
-//      lcd.clear();
-//     }
+  *port_L |= (0 << PINL4) | (0 << PINL0) | (0 << PINL2); // set fan gled rled to low
+  
+  // Water Sensor
+  if (disabledState==1){
+    *port_B |= (1 << PINB0); // digitalWrite(yLED, HIGH);
+    lcd.noDisplay();
+  }
+  else {
+     resval = analogRead(respin);
+     
+     // Error state
+     while (resval<=100 || resetButtonState != 0) {
+      digitalRead(resetButton);
+      lcd.clear();
+      lcd.display();
+      lcd.setCursor(0,0);
+      *port_L |= (0 << PINL2); // digitalWrite(rLED, HIGH);
+      lcd.print("Water Lvl: Empty"); 
+      delay(1000);
+      lcd.clear();
+     }
 //
 //    // Read and display Temp and Humid. Determine state run and idle
 //    humidIn = dht.readHumidity();
@@ -116,6 +108,7 @@ void loop() {
 //    delay(1000);
 //    lcd.clear();
 }
+}
 
 void disabled() {
   // YELLOW LED ON, FAN OFF, No sensors
@@ -134,12 +127,3 @@ void disabled() {
 //  delay(1000);
 //}
 //
-//void idle(){
-//  // GREEN LED ON, CURRENT TIME, CURRENT WATER LEVEL 
-//  digitalWrite(gLED, LOW);
-//}
-//
-//void error(){
-//  // RED LED ON, ERROR MESSAGE, Motor off
-//  digitalWrite(rLED,LOW);
-//}
