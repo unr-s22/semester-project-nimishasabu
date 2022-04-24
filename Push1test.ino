@@ -1,4 +1,4 @@
-//4/24/21 02:34pm
+//4/24/21 02:49pm
 #include <DS3231.h>
 #include <LiquidCrystal.h>
 #include <Stepper.h>
@@ -23,9 +23,12 @@ const int stepButton = 53;
 int stepButtonState = 0;
 
 //const int fan = 45;
-unsigned char *port_D = (unsigned char *) 0x2B;
-unsigned char *DDR_D = (unsigned char *) 0x2A;
+//unsigned char *port_D = (unsigned char *) 0x2B;
+//unsigned char *DDR_D = (unsigned char *) 0x2A;
 //int fanState = 0;
+
+unsigned char *port_L = (unsigned char *) 0x10B;
+unsigned char *DDR_L = (unsigned char *) 0x10A;
 
 
 int steppos = 0;
@@ -52,7 +55,8 @@ void setup()
   pinMode(onOffButton, INPUT_PULLUP);
   pinMode(resetButton, INPUT);
   //pinMode(fan, OUTPUT);
-  *DDR_D |= 0b00000100;
+  //*DDR_D |= 0b00000100;
+  *DDR_L |= 0b00010000;
   
   pinMode(yLED, OUTPUT);
   pinMode(bLED, OUTPUT);
@@ -62,7 +66,10 @@ void setup()
 }
 
 void loop() {
-  *port_D |= (1 << PIND2);
+  
+  *port_L |= (1 << PINL4);
+
+//  *port_D |= (1 << PIND2);
 //  digitalWrite(fan, HIGH); port_D |= (1 << PIND2)
 //  digitalWrite(yLED, HIGH);
 //  digitalWrite(gLED, HIGH);
