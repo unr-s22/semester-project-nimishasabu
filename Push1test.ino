@@ -1,3 +1,4 @@
+//4/24/21 01:36pm
 //4/24/21 02:01pm
 #include <DS3231.h>
 #include <LiquidCrystal.h>
@@ -52,84 +53,86 @@ void setup()
 }
 
 void loop() {
-  digitalWrite(yLED, HIGH);
-  digitalWrite(gLED, HIGH);
-  digitalWrite(rLED, HIGH);
-  digitalWrite(bLED, HIGH);
-  
-  // Water Sensor
-  if (state==0){
-    digitalWrite(yLED, LOW);
-    lcd.noDisplay();
-    fanState = 0;
-  }
-  else {
-     // Error state
-     while (resval<=100 || resetButtonState != 0) {
-      digitalRead(resetButton);
-      lcd.clear();
-      lcd.display();
-      lcd.setCursor(0,0);
-      digitalWrite(rLED, LOW);
-      lcd.print("Water Lvl: Empty"); 
-      delay(1000);
-      lcd.clear();
-     }
 
-    // Read and display Temp and Humid. Determine state run and idle
-    humidIn = dht.readHumidity();
-    tempIn = dht.readTemperature();
-    tempF = dht.readTemperature(true);
-    lcd.setCursor(0,0);
-    lcd.print("Temp: ");
-    lcd.setCursor(7,0);
-    lcd.print(tempF);
-    delay(1000);
-    
-    // state change to idle from running
-    if (tempIn < 80.0) {
-      state = 2;
-    }
-    
-    lcd.setCursor(0,1);
-    lcd.print("Humid: ");
-    lcd.setCursor(8,1);
-    lcd.print(humidIn);
-    delay(1000);
-    lcd.clear(); 
-
-    // Stepper Motor, should move independent of rest, not when disabled
-    int stepButtonState = digitalRead(stepButton);
-    if (stepButtonState == HIGH){myStepper.step(100); steppos += 1;}
-    delay(1000);
-    lcd.clear();
-}
-}
-
-void disabled() {
-  // YELLOW LED ON, FAN OFF, No sensors
-  state = 0;
-  digitalWrite(yLED, LOW);
-  lcd.noDisplay();
+  digitalWrite(45, HIGH);
+//  digitalWrite(yLED, HIGH);
+//  digitalWrite(gLED, HIGH);
+//  digitalWrite(rLED, HIGH);
+//  digitalWrite(bLED, HIGH);
+//  
+//  // Water Sensor
+//  if (state==0){
+//    digitalWrite(yLED, LOW);
+//    lcd.noDisplay();
+//    fanState = 0;
+//  }
+//  else {
+//     // Error state
+//     while (resval<=100 || resetButtonState != 0) {
+//      digitalRead(resetButton);
+//      lcd.clear();
+//      lcd.display();
+//      lcd.setCursor(0,0);
+//      digitalWrite(rLED, LOW);
+//      lcd.print("Water Lvl: Empty"); 
+//      delay(1000);
+//      lcd.clear();
+//     }
+//
+//    // Read and display Temp and Humid. Determine state run and idle
+//    humidIn = dht.readHumidity();
+//    tempIn = dht.readTemperature();
+//    tempF = dht.readTemperature(true);
+//    lcd.setCursor(0,0);
+//    lcd.print("Temp: ");
+//    lcd.setCursor(7,0);
+//    lcd.print(tempF);
+//    delay(1000);
+//    
+//    // state change to idle from running
+//    if (tempIn < 80.0) {
+//      state = 2;
+//    }
+//    
+//    lcd.setCursor(0,1);
+//    lcd.print("Humid: ");
+//    lcd.setCursor(8,1);
+//    lcd.print(humidIn);
+//    delay(1000);
+//    lcd.clear(); 
+//
+//    // Stepper Motor, should move independent of rest, not when disabled
+//    int stepButtonState = digitalRead(stepButton);
+//    if (stepButtonState == HIGH){myStepper.step(100); steppos += 1;}
+//    delay(1000);
+//    lcd.clear();
+//}
 }
 
-void Times(){
-  // During state transition, send this date and time
-  Serial.print("Time:  ");
-  Serial.println(rtc.getTimeStr());
-  Serial.print("Date: ");
-  Serial.println(rtc.getDateStr());
-  Serial.print("Vent Position: ");
-  Serial.print(steppos);
-  delay(1000);
-}
-
-void idle(){
-  // GREEN LED ON, CURRENT TIME, CURRENT WATER LEVEL 
-  digitalWrite(gLED, LOW);
-}
-
-void error(){
-  // RED LED ON, ERROR MESSAGE, Motor off
-  digitalWrite(rLED,LOW);
-}
+//void disabled() {
+//  // YELLOW LED ON, FAN OFF, No sensors
+//  state = 0;
+//  digitalWrite(yLED, LOW);
+//  lcd.noDisplay();
+//}
+//
+//void Times(){
+//  // During state transition, send this date and time
+//  Serial.print("Time:  ");
+//  Serial.println(rtc.getTimeStr());
+//  Serial.print("Date: ");
+//  Serial.println(rtc.getDateStr());
+//  Serial.print("Vent Position: ");
+//  Serial.print(steppos);
+//  delay(1000);
+//}
+//
+//void idle(){
+//  // GREEN LED ON, CURRENT TIME, CURRENT WATER LEVEL 
+//  digitalWrite(gLED, LOW);
+//}
+//
+//void error(){
+//  // RED LED ON, ERROR MESSAGE, Motor off
+//  digitalWrite(rLED,LOW);
+//}
