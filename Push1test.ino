@@ -1,4 +1,4 @@
-//4/27/21 12:58 pm
+//4/27/21 2:13 pm
 #include <DS3231.h>
 #include <LiquidCrystal.h>
 #include <Stepper.h>
@@ -36,7 +36,6 @@ volatile int resetButton = 3;
 int resetButtonState = 0;
 void disabled();
 
-
 void setup()
 {
   analogWrite(13, Contrast);
@@ -57,7 +56,7 @@ void setup()
 }
 
 void loop() {
-  //*port_B &= (0 << PINB0) & (0 << PINB2); // set yled and bled to low
+  *port_B &= (0 << PINB0) & (0 << PINB2); // set yled and bled to low
   *port_L &= (0 << PINL4) & (0 << PINL0) & (0 << PINL2); // set fan gled rled to low
   
   // Water Sensor
@@ -69,9 +68,7 @@ void loop() {
   }
   else {
     *port_B &= (0 << PINB0); // yellow led 
-    //*port_L = (1 << PINL4);
-    //*port_L = (1 << PINL0);
-    *port_L = 0b00010001; //(1 << PINL0) | (1 << PINL4);
+    *port_L = 0b00010001; //(1 << PINL0) | (1 << PINL4); *port_L = (1 << PINL4); *port_L = (1 << PINL0);
 
 
   }
