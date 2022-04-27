@@ -1,4 +1,4 @@
-//4/24/21 03:57 pm
+//4/27/21 12:58 pm
 #include <DS3231.h>
 #include <LiquidCrystal.h>
 #include <Stepper.h>
@@ -57,28 +57,38 @@ void setup()
 }
 
 void loop() {
-  *port_B |= (0 << PINB0) | (0 << PINB2); // set yled and bled to low
-  *port_L |= (0 << PINL4) | (0 << PINL0) | (0 << PINL2); // set fan gled rled to low
+  //*port_B &= (0 << PINB0) & (0 << PINB2); // set yled and bled to low
+  *port_L &= (0 << PINL4) & (0 << PINL0) & (0 << PINL2); // set fan gled rled to low
   
   // Water Sensor
   if (disabledState==1){
-    *port_B |= (1 << PINB0); // digitalWrite(yLED, HIGH);
+    *port_B = (1 << PINB0); // digitalWrite(yLED, HIGH);
+    *port_L &= (0 << PINL4); //Fan to low
     lcd.noDisplay();
+    delay(100);
   }
   else {
-     resval = analogRead(respin);
+    *port_B &= (0 << PINB0); // yellow led 
+    //*port_L = (1 << PINL4);
+    //*port_L = (1 << PINL0);
+    *port_L = 0b00010001; //(1 << PINL0) | (1 << PINL4);
+
+
+  }
+    
+//     resval = analogRead(respin);
+//     
+//     // Error state
+//     while (resval<=100 || resetButtonState != 0) {
+//      digitalRead(resetButton);
+//      lcd.clear();
+//      lcd.display();
+//      lcd.setCursor(0,0);
+//      *port_L |= (0 << PINL2); // digitalWrite(rLED, HIGH);
+//      lcd.print("Water Lvl: Empty"); 
+//      delay(1000);
+//      lcd.clear();
      
-     // Error state
-     while (resval<=100 || resetButtonState != 0) {
-      digitalRead(resetButton);
-      lcd.clear();
-      lcd.display();
-      lcd.setCursor(0,0);
-      *port_L |= (0 << PINL2); // digitalWrite(rLED, HIGH);
-      lcd.print("Water Lvl: Empty"); 
-      delay(1000);
-      lcd.clear();
-     }
 //
 //    // Read and display Temp and Humid. Determine state run and idle
 //    humidIn = dht.readHumidity();
@@ -107,7 +117,7 @@ void loop() {
 //    if (stepButtonState == HIGH){myStepper.step(100); steppos += 1;}
 //    delay(1000);
 //    lcd.clear();
-}
+
 }
 
 void disabled() {
