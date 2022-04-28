@@ -1,4 +1,4 @@
-//4/28/21 11:38pm RESET button WORKS!!
+//4/28/21 11:51 pm RESET WORKS!
 #include <DS3231.h>
 #include <LiquidCrystal.h>
 #include <Stepper.h>
@@ -18,6 +18,10 @@ unsigned char *port_B = (unsigned char *) 0x25;  // for yLED and bLED
 unsigned char *DDR_B = (unsigned char *) 0x24;
 unsigned char *port_L = (unsigned char *) 0x10B; // for fan rLED and gLED
 unsigned char *DDR_L = (unsigned char *) 0x10A;
+unsigned char *port_H = (unsigned char *) 0x102;
+unsigned char *DDR_H = (unsigned char *) 0x101;
+unsigned char *port_C = (unsigned char *) 0x28;
+unsigned char *DDR_C = (unsigned char *) 0x27;
 //unsigned char *port_D = (unsigned char *) 0x2B;
 //unsigned char *DDR_D = (unsigned char *) 0x2A;
 int Contrast = 60;
@@ -51,6 +55,7 @@ void setup()
 
   *DDR_B |= 0b00000001 | 0b00000100;   //yled | bled - output ;
   *DDR_L |= 0b00010000 | 0b00000001 | 0b00000100; //fan | gled | rled - output;
+   
  
   attachInterrupt(digitalPinToInterrupt(onOffButton), disabled, CHANGE);
   //attachInterrupt(digitalPinToInterrupt(resetButton), reset, LOW);
@@ -116,10 +121,26 @@ resetState = 0;
       *port_L &= (0 << PINL0);// turn the green led off
       *port_B |= (1 << PINB2);//turn the blue led on
       *port_L |= (1 << PINL4); //turn the fan on
+       humidIn = dht.readHumidity();
+      tempIn = dht.readTemperature();
+      tempF = dht.readTemperature(true);
       resval = analogRead(respin);
       lcd.display();
       lcd.print(resval);
       lcd.clear();
+      lcd.display();
+      lcd.setCursor(0,0);
+      lcd.print("Temp: ");
+      lcd.setCursor(7,0);
+      lcd.print(tempIn);
+      delay(1000);
+      lcd.setCursor(0,1);
+      lcd.print("Humid: ");
+      lcd.setCursor(8,1);
+      lcd.print(humidIn);
+      delay(1000);
+      lcd.clear();
+      delay(1000);
     }
   }
     
