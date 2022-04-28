@@ -1,4 +1,4 @@
-/// 4/28/21 12:33 pm RESET WORKS!
+/// 4/28/21 12:40 pm RESET WORKS!
 /// CPE 301 Swamp Cooler Project
 /// Written by: Jeremy Laporte, Nimisha Sabu, Yeamin Chowdhury
 /// const int fan = 45; volatile const int yLED = 53; (B0)
