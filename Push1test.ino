@@ -1,4 +1,4 @@
-//4/28/21 10:13 pm
+//4/28/21 11:38pm RESET button WORKS!!
 #include <DS3231.h>
 #include <LiquidCrystal.h>
 #include <Stepper.h>
@@ -53,14 +53,16 @@ void setup()
   *DDR_L |= 0b00010000 | 0b00000001 | 0b00000100; //fan | gled | rled - output;
  
   attachInterrupt(digitalPinToInterrupt(onOffButton), disabled, CHANGE);
-  //attachInterrupt(digitalPinToInterrupt(resetButton), reset, CHANGE);
+  //attachInterrupt(digitalPinToInterrupt(resetButton), reset, LOW);
 }
 
 void loop() {
-   if(digitalRead(resetButton)==LOW){
-  resetState = 1;
-  }else{
-    resetState = 0;}
+//   if(digitalRead(resetButton)==LOW){
+//  resetState = 1;
+//  }else{
+//    resetState = 0;}
+
+resetState = 0;
     
   *port_B &= (0 << PINB0) & (0 << PINB2); // set yled and bled to low
   *port_L &= (0 << PINL4) & (0 << PINL0) & (0 << PINL2); // set fan gled rled to low
@@ -70,6 +72,7 @@ void loop() {
   tempIn = dht.readTemperature();
   tempF = dht.readTemperature(true);
   resval = analogRead(respin);
+  //resval=400;
     
   if (disabledState==1){
     *port_B = (1 << PINB0); // digitalWrite(yLED, HIGH);
@@ -77,16 +80,7 @@ void loop() {
     lcd.noDisplay();
     delay(100);
   }
-  else if (resval <= 300 && disabledState==0 && resetState == 1){                  //error state
-      *port_L &= (0 << PINL0); //turn off the green light
-      *port_L &= (0 << PINL4); //keep the fan off 
-      *port_L |= (1 << PINL2); //turn the red light on
-      delay (1000);
-      lcd.clear();
-      //lcd.display();
-      //lcd.setCursor(0,0);
-      //lcd.print("Water Lvl: LOW");
-    }
+  
   else {  //IDLE State
     *port_B &= (0 << PINB0); // yellow led off
     *port_L |= (1 << PINL0);//turn the green led on
@@ -104,12 +98,28 @@ void loop() {
     delay(1000);
     lcd.clear();
     delay(1000);
+
+    while(resval <= 300 && disabledState==0 && resetState == 0){
+    //error state
+       resetState=!digitalRead(resetButton);
+      *port_L &= (0 << PINL0); //turn off the green light
+      *port_L &= (0 << PINL4); //keep the fan off 
+      *port_L |= (1 << PINL2); //turn the red light on
+      delay (1000);
+      lcd.clear();
+      lcd.display();
+      lcd.setCursor(0,0);
+      lcd.print("Water Lvl: LOW");}
     
     //*port_L = 0b00010001; //(1 << PINL0) | (1 << PINL4); *port_L = (1 << PINL4); *port_L = (1 << PINL0);
     while (tempIn > 22.0 && disabledState==0 && resval>300) {    //running state
       *port_L &= (0 << PINL0);// turn the green led off
       *port_B |= (1 << PINB2);//turn the blue led on
       *port_L |= (1 << PINL4); //turn the fan on
+      resval = analogRead(respin);
+      lcd.display();
+      lcd.print(resval);
+      lcd.clear();
     }
   }
     
@@ -121,6 +131,7 @@ void loop() {
 
 }
 
+
 // ------------------------------------------------------------------------
 void disabled() {
   // YELLOW LED ON, FAN OFF, No sensors
@@ -129,14 +140,14 @@ void disabled() {
 }
 
 // ------------------------------------------------------------------------
-/*void reset() {
-  //resetState = 1;
-  if(resetState == 0){
-  resetState = 1;
-  }else{
-    resetState = 0;
-  }
-}*/
+//void reset() {
+//  //resetState = 1;
+//  if(resetState == 0){
+//  resetState = 1;
+//  }else{
+//    resetState = 0;
+//  }
+//}
 
 //void Times(){
 //  // During state transition, send this date and time
