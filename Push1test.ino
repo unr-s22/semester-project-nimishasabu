@@ -1,4 +1,4 @@
-//4/27/21 4:25 pm
+//4/28/21 9:45 pm
 #include <DS3231.h>
 #include <LiquidCrystal.h>
 #include <Stepper.h>
@@ -12,8 +12,8 @@ LiquidCrystal lcd(12, 11, 10, 9, 8, 7);
 Stepper myStepper(512, 2,3,4,5);
 DHT dht(DHTPIN, DHTTYPE);
 
-//const int fan = 45; volatile const int yLED = 53; B0
-//volatile const int bLED = 51; B2 volatile const int rLED = 47; L2 volatile const int gLED = 49; L0
+//const int fan = 45; volatile const int yLED = 53; (B0)
+//volatile const int bLED = 51; (B2) volatile const int rLED = 47; (L2) volatile const int gLED = 49; (L0)
 unsigned char *port_B = (unsigned char *) 0x25;  // for yLED and bLED
 unsigned char *DDR_B = (unsigned char *) 0x24;
 unsigned char *port_L = (unsigned char *) 0x10B; // for fan rLED and gLED
@@ -32,8 +32,8 @@ const int stepButton = 53;
 int stepButtonState = 0;
 int steppos = 0;
 volatile int onOffButton = 18;
-volatile int resetButton = 3;
-int resetButtonState = 0;
+volatile int resetButton = 16;
+int resetState = 0;
 void disabled();
 
 void setup()
@@ -53,17 +53,20 @@ void setup()
   *DDR_L |= 0b00010000 | 0b00000001 | 0b00000100; //fan | gled | rled - output;
  
   attachInterrupt(digitalPinToInterrupt(onOffButton), disabled, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(resetButton), reset, CHANGE);
 }
 
 void loop() {
   *port_B &= (0 << PINB0) & (0 << PINB2); // set yled and bled to low
   *port_L &= (0 << PINL4) & (0 << PINL0) & (0 << PINL2); // set fan gled rled to low
 
-    humidIn = dht.readHumidity();
-    tempIn = dht.readTemperature();
-    tempF = dht.readTemperature(true);
-  // Water Sensor
-  
+  // Read and display Temp and Humid. Determine state run and idle
+  humidIn = dht.readHumidity();
+  tempIn = dht.readTemperature();
+  tempF = dht.readTemperature(true);
+
+  resetState = 0;
+    
   if (disabledState==1){
     *port_B = (1 << PINB0); // digitalWrite(yLED, HIGH);
     *port_L &= (0 << PINL4); //Fan to low
@@ -73,9 +76,9 @@ void loop() {
   else {//IDLE State
     *port_B &= (0 << PINB0); // yellow led off
     *port_L |= (1 << PINL0);//turn the green led on
-     lcd.clear();
-     lcd.display();
-     lcd.setCursor(0,0);
+    lcd.clear();
+    lcd.display();
+    lcd.setCursor(0,0);
     lcd.print("Temp: ");
     lcd.setCursor(7,0);
     lcd.print(tempIn);
@@ -87,68 +90,25 @@ void loop() {
     delay(1000);
     lcd.clear();
     resval = analogRead(respin);
-    lcd.print(resval);
     delay(1000);
     
-     
     //*port_L = 0b00010001; //(1 << PINL0) | (1 << PINL4); *port_L = (1 << PINL4); *port_L = (1 << PINL0);
-
-     while(resval <= 300 && disabledState==0){
+     while(resval <= 300 && disabledState==0){                  //error state
       *port_L &= (0 << PINL0); //turn off the green light
       *port_L &= (0 << PINL4); //keep the fan off 
-      *port_L |= (1 << PINL2);//turn the red light on
+      *port_L |= (1 << PINL2); //turn the red light on
       lcd.clear();
       lcd.display();
       lcd.setCursor(0,0);
-      lcd.print("Water Lvl: LOW"); 
+      lcd.print("Water Lvl: LOW");
     }
-
-    while (tempIn > 22.0 && disabledState==0 && resval>300) {//running state
+    while (tempIn > 22.0 && disabledState==0 && resval>300 && resetState == 0) {    //running state
       *port_L &= (0 << PINL0);// turn the green led off
       *port_B |= (1 << PINB2);//turn the blue led on
       *port_L |= (1 << PINL4); //turn the fan on
-
-    
-  }
-
-
+    }
   }
     
-//     resval = analogRead(respin);
-//     
-//     // Error state
-//     while (resval<=100 || resetButtonState != 0) {
-//      digitalRead(resetButton);
-//      lcd.clear();
-//      lcd.display();
-//      lcd.setCursor(0,0);
-//      *port_L |= (0 << PINL2); // digitalWrite(rLED, HIGH);
-//      lcd.print("Water Lvl: Empty"); 
-//      delay(1000);
-//      lcd.clear();
-     
-//
-//    // Read and display Temp and Humid. Determine state run and idle
-//    humidIn = dht.readHumidity();
-//    tempIn = dht.readTemperature();
-//    tempF = dht.readTemperature(true);
-//    lcd.setCursor(0,0);
-//    lcd.print("Temp: ");
-//    lcd.setCursor(7,0);
-//    lcd.print(tempF);
-//    delay(1000);
-//    
-//    // state change to idle from running
-//    if (tempIn < 80.0) {
-//      state = 2;
-//    }
-//    
-//    lcd.setCursor(0,1);
-//    lcd.print("Humid: ");
-//    lcd.setCursor(8,1);
-//    lcd.print(humidIn);
-//    delay(1000);
-//    lcd.clear(); 
 //
 //    // Stepper Motor, should move independent of rest, not when disabled
 //    int stepButtonState = digitalRead(stepButton);
@@ -163,6 +123,10 @@ void disabled() {
   // YELLOW LED ON, FAN OFF, No sensors
   if (disabledState == 0) {disabledState = 1;}
   else {disabledState = 0;}
+}
+
+void reset() {
+  resetState = 1;
 }
 
 //void Times(){
