@@ -1,9 +1,10 @@
-/// 4/28/21 12:33 pm RESET WORKS!
+/// 4/28/21 1:04 pm
 /// CPE 301 Swamp Cooler Project
-/// Written by: Jeremy Laporte, Nimisha Sabu, Yeamin Chowdhury
+/// Written by: Jeremy Laporte, Nimisha Sabu, Yeamin Chowdery
 /// const int fan = 45; volatile const int yLED = 53; (B0)
 /// volatile const int bLED = 51; (B2) volatile const int rLED = 47; (L2) volatile const int gLED = 49; (L0)
 /// const int stepButton = 50 (B3); //volatile int onOffButton = 18 (D3); //volatile int resetButton = 38 (D7);
+/// input: DDr = 0; inw/pullup: DDr = 0, port = 1, pin = 1; output: DDr = 1;
 
 #include <DS3231.h>
 #include <LiquidCrystal.h>
@@ -33,6 +34,10 @@ volatile int disabledState = 1;
 int stepButtonState = 0;
 int steppos = 0;
 volatile int resetState = 0;
+int count1 = 0;
+int count2 = 0;
+int count3 = 0;
+int count4 = 0;
 void disabled();
 
 int resval = 0;                  // holds the sensor value
@@ -42,6 +47,7 @@ int respin = A5;                 // analog water sensor - pin used
 void setup()
 {
   analogWrite(13, Contrast);
+  Serial.begin(9600);
   lcd.begin(16,2);                     // Initialize the lcd display
   dht.begin();                         // Initialize the temperature sensor
   rtc.begin();                         // Initialize the real time clock object
@@ -62,10 +68,9 @@ void setup()
 
 void loop() {
   resetState = 0;
-    
   *port_B &= (0 << PINB0) & (0 << PINB2);                // set yled and bled to low
   *port_L &= (0 << PINL4) & (0 << PINL0) & (0 << PINL2); // set fan gled rled to low
-
+  
   // Read and display Temp and Humid. Determine state run and idle
   humidIn = dht.readHumidity();
   tempIn = dht.readTemperature();
@@ -74,6 +79,17 @@ void loop() {
     
   if (disabledState==1){
    // DISABLED State
+   // During state transition, send this date and time
+   for (count1; count1 != 0; count1++) {
+     count2 = 0; count3 = 0; count4 = 0;
+     Serial.print("Time:  ");
+     Serial.println(rtc.getTimeStr());
+     Serial.print("Date: ");
+     Serial.println(rtc.getDateStr());
+     Serial.print("Vent Position: ");
+     Serial.print(steppos);
+     delay(1000);
+   }
     *port_B = (1 << PINB0); // digitalWrite(yLED, HIGH);
     *port_L &= (0 << PINL4); //Fan to low
     lcd.noDisplay();
@@ -82,6 +98,20 @@ void loop() {
   
   else {
    // IDLE/RUNNING/ERROR State hub
+    // During state transition, send this date and time
+    for (count2; count2 != 0; count2++) {
+      count1 = 0; count3 = 0; count4 = 0;
+      Serial.print("Time:  ");
+      Serial.println(rtc.getTimeStr());
+      Serial.print("Date: ");
+      Serial.println(rtc.getDateStr());
+      Serial.print("Vent Position: ");
+      Serial.print(steppos);
+      delay(1000);
+    }
+    // Stepper Motor, should move independent of rest, not when disabled
+    stepButtonState = digitalRead(53);
+    if (stepButtonState == HIGH){myStepper.step(100); steppos += 1;}
     *port_B &= (0 << PINB0); // yellow led off
     *port_L |= (1 << PINL0);//turn the green led on
     lcd.clear();
@@ -101,6 +131,21 @@ void loop() {
 
     while(resval <= 300 && disabledState==0 && resetState == 0){
      //ERROR State
+      // During state transition, send this date and time
+      for (count3; count3 != 0; count3++) {
+        count1 = 0; count2 = 0; count4 = 0;
+        Serial.print("Time:  ");
+        Serial.println(rtc.getTimeStr());
+        Serial.print("Date: ");
+        Serial.println(rtc.getDateStr());
+        Serial.print("Vent Position: ");
+        Serial.print(steppos);
+        delay(1000);
+      }
+      // Stepper Motor, should move independent of rest, not when disabled
+      stepButtonState = digitalRead(53);
+      if (stepButtonState == HIGH){myStepper.step(100); steppos += 1;}
+      
       resetState=!digitalRead(38);
       *port_L &= (0 << PINL0); //turn off the green light
       *port_L &= (0 << PINL4); //keep the fan off 
@@ -113,12 +158,23 @@ void loop() {
       
     while (tempIn > 22.0 && disabledState==0 && resval>300) {
      //RUNNING State
+      // During state transition, send this date and time
+      for (count4; count4 != 0; count4++) {
+        count1 = 0; count2 = 0; count3 = 0;
+        Serial.print("Time:  ");
+        Serial.println(rtc.getTimeStr());
+        Serial.print("Date: ");
+        Serial.println(rtc.getDateStr());
+        Serial.print("Vent Position: ");
+        Serial.print(steppos);
+        delay(1000);
+      }
       *port_L &= (0 << PINL0);// turn the green led off
       *port_B |= (1 << PINB2);//turn the blue led on
       *port_L |= (1 << PINL4); //turn the fan on
 
       // Stepper Motor, should move independent of rest, not when disabled
-      int stepButtonState = digitalRead(53);
+      stepButtonState = digitalRead(53);
       if (stepButtonState == HIGH){myStepper.step(100); steppos += 1;}
     
       humidIn = dht.readHumidity();
@@ -145,20 +201,9 @@ void loop() {
   }
 }
 
+
 // ------------------------------------------------------------------------
 void disabled() {
   if (disabledState == 0) {disabledState = 1;}
   else {disabledState = 0;}
 }
-
-//void Times(){
-//  // During state transition, send this date and time
-//  Serial.print("Time:  ");
-//  Serial.println(rtc.getTimeStr());
-//  Serial.print("Date: ");
-//  Serial.println(rtc.getDateStr());
-//  Serial.print("Vent Position: ");
-//  Serial.print(steppos);
-//  delay(1000);
-//}
-//
