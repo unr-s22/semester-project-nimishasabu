@@ -1,4 +1,4 @@
-/// 4/28/21 2:50 am
+/// 5/1/2022 4:30 pm
 /// CPE 301 Swamp Cooler Project
 /// Written by: Jeremy Laporte, Nimisha Sabu, Yeamin Chowdery
 /// const int fan = 45; volatile const int yLED = 53; (B0)
@@ -29,6 +29,11 @@ unsigned char *DDR_L = (unsigned char *) 0x10A;
 unsigned char *port_D = (unsigned char *) 0x2B; // for onOff and reset button
 unsigned char *DDR_D = (unsigned char *) 0x2A;
 unsigned char *pin_D = (unsigned char *) 0x29;  // for input w/ pullup
+
+volatile unsigned char* my_ADMUX = (unsigned char*) 0x7C;   // Analog to digital mux
+volatile unsigned char* my_ADCSRB = (unsigned char*) 0x7B;  // anatodig serial reg B
+volatile unsigned char* my_ADCSRA = (unsigned char*) 0x7A;  // A to D serial reg A
+volatile unsigned int* my_ADC_DATA = (unsigned int*) 0x78;  // A to D data register
 
 //External Interrupt Register addresses.
 volatile unsigned char* EICRA_1 = (unsigned char*) 0x69;
@@ -66,6 +71,7 @@ void setup()
   //rtc.setTime(12,34,30);
   //rtc.setDate(4,12,2022);
   myStepper.setSpeed(200);
+  adc_init();
 
   // pin modes:
   *DDR_B |= 0b00000001 | 0b00000100;   //yled | bled - output
@@ -232,6 +238,47 @@ void print_time(){
    Serial.print("  "); 
    delay(500); 
 }
+
+// ------------------------------------------------------------------------
+void adc_init()
+{
+  // setup the A register
+  *my_ADCSRA |= 0x80;  // set bit   7 to 1 to enable the ADC
+  // clear bit 5 to 0 to disable the ADC trigger mode(not used)
+  // clear bit 5 to 0 to disable the ADC interrupt(not used)
+  // clear bit 5 to 0 to set prescaler selection to slow reading
+  *my_ADCSRA &= 0xD0;
+  // setup the B register
+  // clear bit 3 to 0 to reset the channel and gain bits
+  // clear bit 2-0 to 0 to set free running mode
+  *my_ADCSRB &= 0xF0;
+  
+  // setup the MUX Register
+  // clear bit 7 to 0 for AVCC analog reference
+  // set bit   6 to 1 for AVCC analog reference
+  *my_ADMUX &= 0x40;
+  // clear bit 5 to 0 for right adjust result
+  *my_ADMUX |= 0x40;
+}
+
+// ------------------------------------------------------------------------
+unsigned int adc_read(unsigned char adc_channel_num)
+{
+  *my_ADCSRB &= 0xF7;  // clear the channel selection bits (MUX 4:0)
+  *my_ADMUX &= 0xE0;  // clear the channel selection bits (MUX 5)- set the channel number
+  if (adc_channel_num > 7){
+   adc_channel_num = 0;
+  *my_ADCSRB |= 0x08;
+  }
+
+  *my_ADMUX += adc_channel_num;  // set the channel selection bits
+  *my_ADCSRA |= 0x40;  // set bit 6 of ADCSRA to 1 to start a conversion
+  // wait for the conversion to complete
+  while (*my_ADCSRA & 0x10);
+   return (1000 - *my_ADC_DATA);  // return the result in the ADC data register
+
+}
+
 /*void disabled() {
   if (disabledState == 0) {disabledState = 1;}
   else {disabledState = 0;}
@@ -275,3 +322,4 @@ void print_time(){
         Serial.print(steppos);
         delay(1000);
       }*/
+
