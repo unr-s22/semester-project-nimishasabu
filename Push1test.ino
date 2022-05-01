@@ -1,4 +1,4 @@
-/// 4/28/21 1:04 pm
+/// 4/30/21 7:23 pm
 /// CPE 301 Swamp Cooler Project
 /// Written by: Jeremy Laporte, Nimisha Sabu, Yeamin Chowdery
 /// const int fan = 45; volatile const int yLED = 53; (B0)
@@ -26,6 +26,15 @@ unsigned char *DDR_L = (unsigned char *) 0x10A;
 unsigned char *port_D = (unsigned char *) 0x2B; // for onOff and reset button
 unsigned char *DDR_D = (unsigned char *) 0x2A;
 unsigned char *pin_D = (unsigned char *) 0x29;  // for input w/ pullup
+
+//External Interrupt Register addresses.
+volatile unsigned char* EICRA_1 = (unsigned char*) 0x69;
+volatile unsigned char* EICRB_1 = (unsigned char*) 0x6A;
+volatile unsigned char* EMISK_1 = (unsigned char*) 0x3D;
+volatile unsigned char* EIFR_1 = (unsigned char*) 0x3C;
+volatile unsigned char* SREG_1 = (unsigned char*) 0x3F;
+
+ 
 int Contrast = 60;        
 volatile float tempIn = 0;
 volatile float tempF = 0;
@@ -60,10 +69,15 @@ void setup()
   *DDR_L |= 0b00010000 | 0b00000001 | 0b00000100; //fan | gled | rled - output
   *DDR_D &= 0b01110111;  //resetButton | onOffButton - input
   *DDR_B &= 0b11110111;  //stepMotor - input
-  *port_D |= 0b00001000; //onOffButton - input w/ pullup
-  *pin_D |= 0b00001000; //onOffButton - input w/ pullup
+  //*port_D |= 0b00001000; //onOffButton - input w/ pullup
+  //*pin_D |= 0b00001000; //onOffButton - input w/ pullup
 
-  attachInterrupt(digitalPinToInterrupt(18), disabled, CHANGE);
+  *EICRA_1 |= 0b00000001; //CHANGE
+  *EMISK_1 |= 0b00001000; //sets PD3 for the interrupt
+  *SREG_1 |= 0b10000000;
+   
+
+  //attachInterrupt(digitalPinToInterrupt(18), disabled, CHANGE);
 }
 
 void loop() {
@@ -203,7 +217,11 @@ void loop() {
 
 
 // ------------------------------------------------------------------------
-void disabled() {
+ISR (INT3_vect) {
   if (disabledState == 0) {disabledState = 1;}
   else {disabledState = 0;}
 }
+/*void disabled() {
+  if (disabledState == 0) {disabledState = 1;}
+  else {disabledState = 0;}
+}*/
