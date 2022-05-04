@@ -1,4 +1,4 @@
-/// 5/4/2022 2:16 pm
+/// 5/4/2022 4:16 pm
 /// CPE 301 Swamp Cooler Project
 /// Written by: Jeremy Laporte, Nimisha Sabu, Yeamin Chowdery
 /// const int fan = 45; volatile const int yLED = 53; (B0)
@@ -52,9 +52,12 @@ int count1 = 0;                 // Serial-single-print disabled flag
 int count2 = 0;                 // Serial-single-print idle flag
 int count3 = 0;                 // Serial-single-print error flag
 int count4 = 0;                 // Serial-single-print running flag
-void print_time();              // prototype the function for calling
-int resval = 0;                 // holds the sensor value
-int respin = A5;                // analog water sensor - pin used
+void print_time();
+unsigned int adc_read(unsigned char adc_channel_num);
+void adc_init();
+// prototype the function for calling
+unsigned int resval = 0;                 // holds the sensor value
+unsigned char int respin = A5;                // analog water sensor - pin used
 
 
 void setup()
@@ -91,7 +94,7 @@ void loop() {
   humidIn = dht.readHumidity();
   tempIn = dht.readTemperature();
   tempF = dht.readTemperature(true);
-  resval = adc_read(respin);
+  resval = adc_read(5);
     
   if (disabledState==1){
    // DISABLED State
@@ -232,39 +235,49 @@ void print_time(){
 // ------------------------------------------------------------------------
 void adc_init()
 {
-  // setup the A register
-  *my_ADCSRA |= 0x80;  // set bit   7 to 1 to enable the ADC
-  // clear bit 5 to 0 to disable the ADC trigger mode(not used)
-  // clear bit 5 to 0 to disable the ADC interrupt(not used)
-  // clear bit 5 to 0 to set prescaler selection to slow reading
-  *my_ADCSRA &= 0xD0;
-  // setup the B register
-  // clear bit 3 to 0 to reset the channel and gain bits
-  // clear bit 2-0 to 0 to set free running mode
-  *my_ADCSRB &= 0xF0;
+  // set up the A register
+  *my_ADCSRA |= 0b10000000; // set bit   7 to 1 to enable the ADC
+  *my_ADCSRA &= 0b11011111; // clear bit 5 to 0 to disable the ADC trigger mode
+  *my_ADCSRA &= 0b11110111; // clear bit 3 to 0 to disable the ADC interrupt
+  *my_ADCSRA &= 0b11111000; // clear bit 2-0 to 0 to set prescaler selection to slow reading
   
-  // setup the MUX Register
-  // clear bit 7 to 0 for AVCC analog reference
-  // set bit   6 to 1 for AVCC analog reference
-  *my_ADMUX &= 0x40;
-  // clear bit 5 to 0 for right adjust result
-  *my_ADMUX |= 0x40;
+  // set up the B register
+  *my_ADCSRB &= 0b11110111; // clear bit 3 to 0 to reset the channel and gain bits
+  *my_ADCSRB &= 0b11111000; // clear bit 2-0 to 0 to set free running mode
+  
+  // set up the MUX Register
+  *my_ADMUX  &= 0b01111111; // clear bit 7 to 0 for AVCC analog reference
+  *my_ADMUX  |= 0b01000000; // set bit   6 to 1 for AVCC analog reference
+  *my_ADMUX  &= 0b11011111; // clear bit 5 to 0 for right adjust result
+  *my_ADMUX  &= 0b11100000; // clear bit 4-0 to 0 to reset the channel and gain bits
 }
-
-// ------------------------------------------------------------------------
 unsigned int adc_read(unsigned char adc_channel_num)
 {
-  *my_ADCSRB &= 0xF7;  // clear the channel selection bits (MUX 4:0)
-  *my_ADMUX &= 0xE0;  // clear the channel selection bits (MUX 5)- set the channel number
-  if (adc_channel_num > 7){
-   adc_channel_num = 0;
-  *my_ADCSRB |= 0x08;
+  // reset the channel and gain bits
+  *my_ADMUX = 0x00;
+  
+  // clear the channel selection bits
+  *my_ADCSRB = 0x00;
+  
+  // set the channel number
+  if(adc_channel_num > 7)
+  {
+    // set the channel selection bits, but remove the most significant bit (bit 3)
+    adc_channel_num -= 8;
+    
+    // set MUX bit 3
+    *my_ADCSRB |= 0b00001000;
   }
-
-  *my_ADMUX += adc_channel_num;  // set the channel selection bits
-  *my_ADCSRA |= 0x40;  // set bit 6 of ADCSRA to 1 to start a conversion
+  
+  // set the channel selection bits
+  *my_ADMUX  += adc_channel_num;
+  
+  // set bit ?? of ADCSRA to 1 to start a conversion
+  *my_ADCSRA |= 0b01000000;
+  
   // wait for the conversion to complete
-  while (*my_ADCSRA & 0x10);
-   return (1000 - *my_ADC_DATA);  // return the result in the ADC data register
-
+  while((*my_ADCSRA & 0x40) != 0);
+  
+  // return the result in the ADC data register
+  return *my_ADCA;
 }
