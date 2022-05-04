@@ -1,4 +1,4 @@
-/// 5/4/2022 2:16 pm
+/// 5/4/2022 3:16 pm
 /// CPE 301 Swamp Cooler Project
 /// Written by: Jeremy Laporte, Nimisha Sabu, Yeamin Chowdery
 /// const int fan = 45; volatile const int yLED = 53; (B0)
@@ -52,7 +52,10 @@ int count1 = 0;                 // Serial-single-print disabled flag
 int count2 = 0;                 // Serial-single-print idle flag
 int count3 = 0;                 // Serial-single-print error flag
 int count4 = 0;                 // Serial-single-print running flag
-void print_time();              // prototype the function for calling
+void print_time();
+unsigned int adc_read(unsigned char adc_channel_num);
+void adc_init();
+// prototype the function for calling
 int resval = 0;                 // holds the sensor value
 int respin = A5;                // analog water sensor - pin used
 
